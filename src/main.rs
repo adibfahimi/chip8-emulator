@@ -10,7 +10,7 @@ use std::time::Duration;
 const CUBE_SIZE: i32 = 10;
 const SCREEN_WIDTH: i32 = 64 * CUBE_SIZE;
 const SCREEN_HEIGHT: i32 = 32 * CUBE_SIZE;
-const TARGET_FPS: u64 = 200;
+const TARGET_FPS: u64 = 300;
 
 fn main() {
     let file_name = std::env::args().nth(1).expect("No file provided");
@@ -38,7 +38,9 @@ fn main() {
         }
 
         if chip8.sound_timer > 0 {
-            audio.play_sound_multi(&bamboo);
+            if chip8.sound_timer == 1 {
+                audio.play_sound_multi(&bamboo);
+            }
             chip8.sound_timer -= 1;
         }
 

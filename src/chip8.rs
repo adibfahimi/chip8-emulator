@@ -27,7 +27,7 @@ pub struct Chip8 {
     pub delay_timer: u8,
     pub sound_timer: u8,
     pub stack: [u16; 16],
-    pub sp: u16,
+    pub sp: usize,
     pub key: [u8; 16],
 }
 
@@ -87,8 +87,12 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
             }
 
             0x00EE => {
+                if chip8.sp == 0 {
+                    println!("Stack underflow error");
+                    return;
+                }
                 chip8.sp -= 1;
-                chip8.pc = chip8.stack[chip8.sp as usize];
+                chip8.pc = chip8.stack[chip8.sp];
                 chip8.pc += 2;
             }
 
@@ -110,13 +114,23 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
             chip8.v[0xF] = 0;
 
             for yline in 0..height {
-                pixel = chip8.memory[(chip8.i + yline) as usize];
+                let mem_idx = (chip8.i + yline) as usize;
+                if mem_idx >= chip8.memory.len() {
+                    println!("Memory access out of bounds");
+                    return;
+                }
+                pixel = chip8.memory[mem_idx];
                 for xline in 0..8 {
+                    let gfx_idx = ((x + xline + ((y + yline) * 64)) % (64 * 32)) as usize;
+                    if gfx_idx >= chip8.gfx.len() {
+                        println!("Graphics array access out of bounds");
+                        return;
+                    }
                     if (pixel & (0x80 >> xline)) != 0 {
-                        if chip8.gfx[(x + xline + ((y + yline) * 64)) as usize] == 1 {
+                        if chip8.gfx[gfx_idx] == 1 {
                             chip8.v[0xF] = 1;
                         }
-                        chip8.gfx[(x + xline + ((y + yline) * 64)) as usize] ^= 1;
+                        chip8.gfx[gfx_idx] ^= 1;
                     }
                 }
             }
@@ -127,7 +141,11 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
         0x1000 => chip8.pc = opcode & 0x0FFF,
 
         0x2000 => {
-            chip8.stack[chip8.sp as usize] = chip8.pc;
+            if chip8.sp >= chip8.stack.len() {
+                println!("Stack overflow error");
+                return;
+            }
+            chip8.stack[chip8.sp] = chip8.pc;
             chip8.sp += 1;
             chip8.pc = NNN(opcode);
         }
@@ -162,7 +180,8 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
         }
 
         0x7000 => {
-            chip8.v[X(opcode)] += NN(opcode);
+            let x = X(opcode);
+            chip8.v[x] = chip8.v[x].wrapping_add(NN(opcode));
             chip8.pc += 2;
         }
 
@@ -246,7 +265,12 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
 
         0xE000 => match opcode & 0x00FF {
             0x009E => {
-                if chip8.key[chip8.v[X(opcode)] as usize] != 0 {
+                let vx = chip8.v[X(opcode)] as usize;
+                if vx >= chip8.key.len() {
+                    println!("Key index out of bounds");
+                    return;
+                }
+                if chip8.key[vx] != 0 {
                     chip8.pc += 4;
                 } else {
                     chip8.pc += 2;
@@ -254,13 +278,17 @@ pub fn emulate_cycle(chip8: &mut Chip8) {
             }
 
             0x00A1 => {
-                if chip8.key[chip8.v[X(opcode)] as usize] == 0 {
+                let vx = chip8.v[X(opcode)] as usize;
+                if vx >= chip8.key.len() {
+                    println!("Key index out of bounds");
+                    return;
+                }
+                if chip8.key[vx] == 0 {
                     chip8.pc += 4;
                 } else {
                     chip8.pc += 2;
                 }
             }
-
             _ => println!("Unknown opcode: {:04X}", opcode),
         },
 
