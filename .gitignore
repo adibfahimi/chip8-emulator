@@ -1,0 +1,34 @@
+# Build directories
+build/
+bin/
+*.exe
+
+# Generated files
+*.o
+*.a
+*.so
+*.dll
+*.ilk
+*.pdb
+
+# IDE specific
+.vscode/
+.idea/
+*.swp
+*.swo
+.cache
+
+# OS generated
+.DS_Store
+Thumbs.db
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+install_manifest.txt
+*.cmake
+
+# Test files
+*.ch8
