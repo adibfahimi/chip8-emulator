@@ -72,6 +72,7 @@ Chip8 *chip8_init(const char *rom_file_name) {
   chip8->delay_timer = 0;
   chip8->sound_timer = 0;
   chip8->sp = 0;
+  chip8->draw_flag = false;
 
   chip8->memory = malloc(4096);
   if (!chip8->memory) {
@@ -120,13 +121,13 @@ void chip8_emulate(Chip8 *chip8) {
 
   switch (opcode & 0xF000) {
   case 0x0000:
-    switch (opcode & 0x00FF) {
-    case 0x00E0:
+    if (opcode == 0x00E0) {
       memset(chip8->gfx, 0, 64 * 32);
       chip8->pc += 2;
       break;
+    }
 
-    case 0x00EE:
+    if (opcode == 0x00EE) {
       if (chip8->sp == 0) {
         fprintf(stderr, "Stack underflow error\n");
         chip8->pc += 2;
@@ -136,14 +137,10 @@ void chip8_emulate(Chip8 *chip8) {
       chip8->pc = chip8->stack[chip8->sp];
       chip8->pc += 2;
       break;
-
-    case 0x0000:
-      chip8->pc = NNN(opcode);
-      break;
-
-    default:
-      perror("Unknown opcode");
     }
+
+    // 0NNN (SYS addr) is ignored on modern CHIP-8 interpreters.
+    chip8->pc += 2;
     break;
 
   case 0xA000:
@@ -222,6 +219,11 @@ void chip8_emulate(Chip8 *chip8) {
     }
     break;
   case 0x5000:
+    if ((opcode & 0x000F) != 0) {
+      perror("Unknown opcode");
+      chip8->pc += 2;
+      break;
+    }
     if (chip8->v[X(opcode)] == chip8->v[Y(opcode)]) {
       chip8->pc += 4;
     } else {
@@ -235,7 +237,7 @@ void chip8_emulate(Chip8 *chip8) {
 
   case 0x7000:
     x = X(opcode);
-    chip8->v[x] = chip8->v[x] += NN(opcode);
+    chip8->v[x] += NN(opcode);
     chip8->pc += 2;
     break;
 
@@ -292,7 +294,7 @@ void chip8_emulate(Chip8 *chip8) {
     case 0x0007:
       x = X(opcode);
       uint16_t y = Y(opcode);
-      if (chip8->v[y] > chip8->v[x]) {
+      if (chip8->v[y] >= chip8->v[x]) {
         chip8->v[0xF] = 1;
       } else {
         chip8->v[0xF] = 0;
@@ -314,6 +316,11 @@ void chip8_emulate(Chip8 *chip8) {
     break;
 
   case 0x9000:
+    if ((opcode & 0x000F) != 0) {
+      perror("Unknown opcode");
+      chip8->pc += 2;
+      break;
+    }
     if (chip8->v[X(opcode)] != chip8->v[Y(opcode)]) {
       chip8->pc += 4;
     } else {
@@ -331,6 +338,8 @@ void chip8_emulate(Chip8 *chip8) {
       vx = chip8->v[X(opcode)];
       if (vx >= 16) {
         perror("Key index out of bounds");
+        chip8->pc += 2;
+        break;
       }
       if (chip8->key[vx] != 0) {
         chip8->pc += 4;
@@ -343,6 +352,8 @@ void chip8_emulate(Chip8 *chip8) {
       vx = chip8->v[X(opcode)];
       if (vx >= 16) {
         perror("Key index out of bounds");
+        chip8->pc += 2;
+        break;
       }
       if (chip8->key[vx] == 0) {
         chip8->pc += 4;
@@ -395,7 +406,7 @@ void chip8_emulate(Chip8 *chip8) {
       break;
 
     case 0x0029:
-      chip8->i = chip8->v[X(opcode)] * 0x5;
+      chip8->i = 0x50 + (chip8->v[X(opcode)] * 0x5);
       chip8->pc += 2;
       break;
 
