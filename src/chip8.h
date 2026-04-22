@@ -19,8 +19,8 @@ typedef struct {
   uint8_t key[16];
 } Chip8;
 
-uint8_t *read_file(char *file_name, int *file_size);
-Chip8 *chip8_init(char *rom_file_name);
+uint8_t *read_file(const char *file_name, int *file_size);
+Chip8 *chip8_init(const char *rom_file_name);
 void chip8_emulate(Chip8 *chip8);
 void chip8_deinit(Chip8 *chip8);
 

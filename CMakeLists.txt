@@ -1,9 +1,19 @@
 cmake_minimum_required(VERSION 3.15)
 project(chip8_emulator LANGUAGES C)
 
+# CMake 4 removed compatibility with very old policies used by some third-party
+# projects. Set a minimum policy compatibility version for fetched dependencies.
+if(CMAKE_VERSION VERSION_GREATER_EQUAL "4.0")
+    set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+endif()
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
+
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Build type" FORCE)
+endif()
 
 if(NOT TARGET raylib)
     find_package(raylib QUIET)

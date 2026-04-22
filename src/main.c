@@ -6,7 +6,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 const int CUBE_SIZE = 10;
 const int SCREEN_WIDTH = 64 * CUBE_SIZE;

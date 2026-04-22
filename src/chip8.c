@@ -30,7 +30,7 @@ const uint8_t FONTSET[80] = {
     0xF0, 0x80, 0xF0, 0x80, 0x80, // F
 };
 
-uint8_t *read_file(char *file_name, int *file_size) {
+uint8_t *read_file(const char *file_name, int *file_size) {
   FILE *fp = fopen(file_name, "rb");
   if (!fp) {
     perror("Error opening file");
@@ -60,7 +60,7 @@ uint8_t *read_file(char *file_name, int *file_size) {
   return buffer;
 }
 
-Chip8 *chip8_init(char *rom_file_name) {
+Chip8 *chip8_init(const char *rom_file_name) {
   Chip8 *chip8 = malloc(sizeof(Chip8));
   if (!chip8) {
     perror("Error allocating Chip8 struct");
@@ -362,7 +362,7 @@ void chip8_emulate(Chip8 *chip8) {
       chip8->v[X(opcode)] = chip8->delay_timer;
       chip8->pc += 2;
       break;
-    case 0x000A:
+    case 0x000A: {
       bool key_press = false;
 
       for (int i = 0; i < 16; i++) {
@@ -377,6 +377,7 @@ void chip8_emulate(Chip8 *chip8) {
 
       chip8->pc += 2;
       break;
+    }
 
     case 0x0015:
       chip8->delay_timer = chip8->v[X(opcode)];
